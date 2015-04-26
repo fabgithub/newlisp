@@ -18,7 +18,6 @@
 */
 
 #include "newlisp.h"
-#include "pcre.h"
 #include "protos.h"
 #include "primes.h"
 
@@ -43,9 +42,9 @@
 #define INIT_FILE "init.lsp"
 
 #ifdef WINDOWS
-#define fprintf win32_fprintf
-#define fgets win32_fgets
-#define fclose win32_fclose
+#define fprintf win_fprintf
+#define fgets win_fgets
+#define fclose win_fclose
 #endif
 
 #ifdef LIBRARY
@@ -101,26 +100,26 @@ int opsys = 10;
 
 int bigEndian = 1; /* gets set in main() */
 
-int version = 10602;
+int version = 10603;
 
 char copyright[]=
-"\nnewLISP v.10.6.2 Copyright (c) 2015 Lutz Mueller. All rights reserved.\n\n%s\n\n";
+"\nnewLISP v.10.6.3 Copyright (c) 2015 Lutz Mueller. All rights reserved.\n\n%s\n\n";
 
 #ifndef NEWLISP64
 #ifdef SUPPORT_UTF8
 char banner[]=
-"newLISP v.10.6.2 32-bit on %s IPv4/6 UTF-8%s%s\n\n";
+"newLISP v.10.6.3 32-bit on %s IPv4/6 UTF-8%s%s\n\n";
 #else
 char banner[]=
-"newLISP v.10.6.2 32-bit on %s IPv4/6%s%s\n\n";
+"newLISP v.10.6.3 32-bit on %s IPv4/6%s%s\n\n";
 #endif
 #else /* NEWLISP64 */
 #ifdef SUPPORT_UTF8
 char banner[]=
-"newLISP v.10.6.2 64-bit on %s IPv4/6 UTF-8%s%s\n\n";
+"newLISP v.10.6.3 64-bit on %s IPv4/6 UTF-8%s%s\n\n";
 #else
 char banner[]=
-"newLISP v.10.6.2 64-bit on %s IPv4/6%s%s\n\n";
+"newLISP v.10.6.3 64-bit on %s IPv4/6%s%s\n\n";
 #endif 
 #endif /* NEWLISP64 */
 
@@ -550,7 +549,7 @@ if(strncmp(linkOffset + 4, "@@@@", 4) == 0)
 else
     {
 #ifdef WINDOWS
-	name = win32_getExePath(alloca(MAX_PATH));
+	name = win_getExePath(alloca(MAX_PATH));
     loadFile(name, *(unsigned int *)linkOffset, 1, mainContext);
 #else /* if not Win32 get full pathname of file in name */
     if(strchr(name, '/') == NULL) 
@@ -606,11 +605,11 @@ if(getenv("NEWLISPDIR") == NULL)
     {
     newlispDir = alloca(MAX_PATH);
     varValue = getenv("PROGRAMFILES");
-    len = strlen(varValue);
     if(varValue != NULL)
         {
+        len = strlen(varValue);
         strncpy(newlispDir, varValue, MAX_PATH - 12);
-        memcpy(newlispDir, "/newlisp", 8);
+        memcpy(newlispDir + len, "/newlisp", 8);
         newlispDir[len + 8] = 0; 
         setenv("NEWLISPDIR", newlispDir, TRUE);
         }
@@ -1212,6 +1211,8 @@ if(!batchMode)
     return;
     }
 
+if(httpMode) goto RETURN_BATCHMODE;
+
 EXEC_COMMANDLINE:
 if(noPromptMode == FALSE && *command == '!' && *(command + 1) != ' ' && strlen(command) > 1)
     {
@@ -1248,6 +1249,7 @@ if(cmdStream != NULL && batchMode)
         writeStreamStr(cmdStream, buff, 0);
         }
     closeStrStream(cmdStream);
+RETURN_BATCHMODE:
     if(!daemonMode)  exit(1);
     if(IOchannel != NULL) fclose(IOchannel);
 #ifndef LIBRARY
@@ -2539,19 +2541,10 @@ switch(cell->type)
         varPrintf(device, "true"); break;
     
     case CELL_LONG:
-        varPrintf(device,"%ld", cell->contents); break;
-
+        varPrintf(device,"%"PRIdPTR, cell->contents); break;
 #ifndef NEWLISP64
     case CELL_INT64:
-#ifdef TRU64
-        varPrintf(device,"%ld", *(INT64 *)&cell->aux); break;
-#else
-#ifdef WINDOWS
-        varPrintf(device,"%I64d", *(INT64 *)&cell->aux); break;
-#else
-        varPrintf(device,"%lld", *(INT64 *)&cell->aux); break;
-#endif /* WIN32 */
-#endif /* TRU64 */
+        varPrintf(device,"%"PRId64, *(INT64 *)&cell->aux); break;
 #endif /* NEWLISP64 */
 #ifdef BIGINT
     case CELL_BIGINT:
@@ -3282,7 +3275,7 @@ char * ptr;
 
 #ifdef WINDOWS
 /* gets full path of currently executing newlisp.exe */
-pathname = win32_getExePath(alloca(PATH_MAX));
+pathname = win_getExePath(alloca(PATH_MAX));
 #else /* Unix */
 if(strchr(pathname, '/') == NULL) 
     pathname = which(pathname, alloca(PATH_MAX));
@@ -4506,6 +4499,8 @@ READ_EXPR_SYNC
   used by p_sync() in nl-filesys.c 
 READ_EXPR
   used by p_readExpr 
+READ_EXPR_NET
+  used by p_netEval introduces in 10.6.3, before READ_EXPR_SYNC was used
 */
 
 
@@ -4566,14 +4561,14 @@ while(TRUE)
         }
     if(mode == EVAL_STRING)
         resultCell = evaluateExpression((CELL *)program->contents);
-    else /* READ_EXPR or READ_EXPR_SYNC */
+    else /* READ_EXPR, READ_EXPR_SYNC, READ_EXPR_NET */
         {
+        if(resultCell != nilCell) pushResult(resultCell); /* 10.6.3 */
         countCell->contents = (UINT)(stream.ptr - stream.buffer);
         resultCell = (CELL *)program->contents;
         program->contents = (UINT)nilCell; /* de-couple */
-        /* note that resultCell is not marked for deletion
-           because decoupled from cell program */
-        break;
+        if(mode == READ_EXPR_SYNC || mode == READ_EXPR) /* 10.6.3 */
+            break; /* only do first expression */
         }
 
     if(resultStackIdx > resultStackTop - 256)
@@ -5964,9 +5959,9 @@ switch(doType)
     case DOLIST:
         /* list = copyCell(evaluateExpression(cell)); */
         getEvalDefault(cell, &list);
-        list = copyCell(list);
-        if(!isList(list->type))
-            return(errorProcExt(ERR_LIST_EXPECTED, cell));
+        if(isList(list->type)) list = copyCell(list);
+        else if(list->type == CELL_ARRAY) list = arrayList(list, FALSE);
+        else return(errorProcExt(ERR_LIST_EXPECTED, cell));
         cond = cell->next;
         break;
     case DOTREE:
@@ -6057,11 +6052,16 @@ return(cell);
 
 CELL * p_evalBlock(CELL * params)
 {
-CELL * cell;
+CELL * result = nilCell;
 
-cell = evaluateBlock(params);
+while(params != nilCell)
+    {
+    result = evaluateExpression(params);
+    params = params->next;
+    }
+
 pushResultFlag = FALSE;
-return(cell);
+return(result);
 }
 
 extern UINT getAddress(CELL * params);
@@ -7063,7 +7063,7 @@ if(params->type == CELL_STRING)
     }
 else if(params != nilCell)
     {
-    snprintf(sigStr, 11, "$signal-%ld", sig);
+    snprintf(sigStr, 11, "$signal-%d", (int)sig);
     getCreateSymbol(params, &signalEvent, sigStr);
     symHandler[sig - 1] = signalEvent;
     if(signal(sig, signal_handler) == SIG_ERR) return(nilCell);

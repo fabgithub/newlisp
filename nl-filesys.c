@@ -66,12 +66,13 @@ extern char ** environ;
 #endif
 
 #ifdef WINDOWS
-#define fgetc win32_fgetc
-#define realpath win32_realpath
+#define fgetc win_fgetc
+#define realpath win_realpath
 #define random rand
 #define srandom srand
 #include <conio.h>  
 #include <dir.h>
+#include <direct.h>
 #define popen  _popen
 #define pclose _pclose
 #define pipe _pipe
@@ -96,6 +97,7 @@ char * strptime(const char * str, const char * fmt, struct tm * ttm);
 #endif
 
 time_t calcDateValue(int year, int month, int day, int hour, int min, int sec);
+ssize_t currentDateValue(void);
 extern STREAM readLineStream;
 extern FILE * IOchannel;
 extern int pagesize;
@@ -906,7 +908,7 @@ CELL * dirList;
 char * dirPath;
 char * fileName;
 char * pattern = NULL;
-UINT options = 0;
+INT options = 0;
 DIR * dir;
 struct dirent * dEnt;
 
@@ -1184,7 +1186,7 @@ CELL * p_pipe(CELL * params)
 UINT hin, hout;
 IO_SESSION * session;
 
-if(!winPipe(&hin, &hout))    /* see file win32-util.c */
+if(!winPipe(&hin, &hout))    /* see file win-util.c */
     return(nilCell);
 
 session = createIOsession(hin, AF_UNSPEC);
@@ -2452,7 +2454,6 @@ return(cell);
 CELL * p_date(CELL * params)
 {
 time_t t;
-struct timeval tv;
 struct tm * ltm;
 char * ct;
 char * fmt;
@@ -2472,10 +2473,7 @@ char * timeString;
 #endif
 
 if(params == nilCell)
-    {
-    gettimeofday(&tv, NULL);
-    t = tv.tv_sec;
-    }
+    t = (time_t)currentDateValue();
 else
     {
     /* 10.6.1 */
@@ -2532,8 +2530,6 @@ struct tm * ttm;
 time_t sec;
 
 gettimeofday(&tv, NULL);
-
-/* ttm = localtime((time_t *)&tv.tv_sec); 10.6.1 */
 sec = tv.tv_sec;
 ttm = localtime(&sec);
 
@@ -2690,7 +2686,6 @@ gmtoff = ltm->tm_gmtoff/60;
 GetTimeZoneInformation(&timeZone);
 #endif
 
-/* ttm = gmtime((time_t *)&tv.tv_sec); 10.6.1 */
 sec = tv.tv_sec;
 ttm = gmtime(&sec);
 
@@ -2724,7 +2719,7 @@ cell = stuffIntegerList(
 
 #if defined(WINDOWS)
      -timeZone.Bias,
-     timeZone.DaylightBias  
+     (UINT)timeZone.DaylightBias  
 #endif
     );
 
@@ -2737,7 +2732,6 @@ if(params != nilCell)
 return(cell);
 }
 
-
 CELL * p_dateList(CELL * params)
 {
 struct tm *ttm;
@@ -2745,10 +2739,14 @@ ssize_t timeValue;
 time_t timer;
 CELL * cell;
 
-params = getInteger(params, (UINT*)&timeValue);
-/* ttm = gmtime((time_t *)&timeValue); 10.6.1 */
+if(params == nilCell)
+    timeValue = currentDateValue();
+else
+    params = getInteger(params, (UINT*)&timeValue);
+
 timer = (time_t)timeValue;
-ttm = gmtime(&timer);
+if((ttm = gmtime(&timer)) == NULL)
+    return(errorProcExt2(ERR_INVALID_PARAMETER, stuffInteger((UINT)timeValue)));
 
 cell = stuffIntegerList(
     8,
@@ -2771,31 +2769,40 @@ if(params != nilCell)
 return(cell);
 }
 
+ssize_t currentDateValue(void)
+{
+struct timeval tv;
+
+gettimeofday(&tv, NULL);
+return(tv.tv_sec);
+}
 
 CELL * p_dateValue(CELL * params)
 {
-struct timeval tv;
 ssize_t year, month, day, hour, min, sec;
 time_t dateValue;
+int evalFlag = TRUE;
 
 if(params->type == CELL_NIL)
+    return(stuffInteger(currentDateValue()));
+
+params = evaluateExpression(params);
+if(params->type == CELL_EXPRESSION)
     {
-    gettimeofday(&tv, NULL);
-    return(stuffInteger(tv.tv_sec));
+    params = (CELL *)params->contents;
+    evalFlag = FALSE;
     }
 
-params = getInteger(params, (UINT *)&year);
-params = getInteger(params, (UINT *)&month);
-params = getInteger(params, (UINT *)&day);
-
-/* if(year < 1970) return(stuffInteger(0)); */
+params = getIntegerExt(params, (UINT *)&year, FALSE);
+params = getIntegerExt(params, (UINT *)&month, evalFlag);
+params = getIntegerExt(params, (UINT *)&day, evalFlag);
 
 hour = min = sec = 0;
 if(params != nilCell)
         {
-        params = getInteger(params, (UINT *)&hour);
-        params = getInteger(params, (UINT *)&min);
-        getInteger(params, (UINT *)&sec);
+        params = getIntegerExt(params, (UINT *)&hour, evalFlag);
+        params = getIntegerExt(params, (UINT *)&min, evalFlag);
+        getIntegerExt(params, (UINT *)&sec, evalFlag);
         }
 
 dateValue = calcDateValue(year, month, day, hour, min, sec);
@@ -2806,6 +2813,8 @@ return(stuffInteger64((INT64)dateValue));
 return(stuffInteger((UINT)dateValue));
 #endif
 }
+
+
 
 /* changed for 10.6.1 where time_t can be 64-bit on 32-bit Windows */
 time_t calcDateValue(int year, int month, int day, int hour, int min, int sec)
@@ -3076,7 +3085,7 @@ return((int)pSize);
 #endif
 
 
-#ifdef MY_RANDOM /* used with #define EMSCRIPTEN */
+#ifdef MY_RANDOM /* used with #define EMSCRIPTEN before 1.29 */
 
 int  m_w = 0x12345678;    /* must not be zero, nor 0x464fffff */
 int  m_z = 0x23456789;    /* must not be zero, nor 0x9068ffff */

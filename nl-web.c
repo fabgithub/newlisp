@@ -39,7 +39,7 @@
 #ifndef WINDOWS
 #define SOCKET_ERROR -1
 #else
-#define fgets win32_fgets
+#define fgets win_fgets
 #define close closesocket  /* for file operations on Windows use _close */
 #endif
 
@@ -964,7 +964,7 @@ size_t Curl_base64_encode(const char *inp, size_t insize, char **outptr)
 */
 #ifndef LIBRARY
 /* #define DEBUGHTTP  */
-#define SERVER_SOFTWARE "newLISP/10.6.2"
+#define SERVER_SOFTWARE "newLISP/10.6.3"
 
 int sendHTTPmessage(int status, char * description, char * request);
 void handleHTTPcgi(char * command, char * query, ssize_t querySize);
@@ -1120,15 +1120,9 @@ switch(type)
 
             if(type == HTTP_HEAD)
                 {
-#if defined(WINDOWS) || defined(TRU64)
                 snprintf(buff, MAX_BUFF - 1, 
-                    "Content-length: %ld\r\nContent-type: %s\r\n\r\n", 
-                    (INT)fileSize(request), mediaType);
-#else
-                snprintf(buff, MAX_BUFF - 1, 
-                    "Content-length: %lld\r\nContent-type: %s\r\n\r\n", 
-                    (long long int)fileSize(request), mediaType);
-#endif
+                    "Content-length: %"PRId64"\r\nContent-type: %s\r\n\r\n",
+                    fileSize(request), mediaType);
                 sendHTTPpage(buff, strlen(buff), NULL);
                 }
             else
@@ -1238,6 +1232,7 @@ memset(buff, 0, MAX_LINE);
 setenv("HTTP_HOST", "", 1);
 setenv("HTTP_USER_AGENT", "", 1);
 setenv("HTTP_COOKIE", "", 1);
+setenv("HTTP_AUTHORIZATION", "", 1);
 
 while(fgets(buff, MAX_LINE - 1, IOchannel) != NULL)
     {
@@ -1270,6 +1265,8 @@ while(fgets(buff, MAX_LINE - 1, IOchannel) != NULL)
         setenv("HTTP_USER_AGENT", trim(buff + 11), 1);
     if(my_strnicmp(buff, "Cookie:", 7) == 0)
         setenv("HTTP_COOKIE", trim(buff + 7), 1);
+    if(my_strnicmp(buff, "Authorization:", 14) == 0)
+        setenv("HTTP_AUTHORIZATION", trim(buff + 14), 1);
     }
 
 

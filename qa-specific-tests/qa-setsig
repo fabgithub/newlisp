@@ -16,7 +16,7 @@
 (println)
 (println "Testing signals")
 
-(when (= ostype "Win32")
+(when (find ostype '("Windows"))
 	(println "Cannot run qa-signal on this platform")
 	(exit))
 

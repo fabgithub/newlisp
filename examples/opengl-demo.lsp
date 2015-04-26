@@ -1,7 +1,7 @@
 #!/usr/bin/env newlisp 
 # OpenGL and GLUT demo - opengl-demo.lsp
 # using simple import and callback API
-# tested on Win32 and OS X (Intel) 32-bit only!
+# tested on Windows and OS X (Intel) 32-bit only!
 
 # version 1.2, July 2009 - make drawObject working with motion
 
@@ -58,7 +58,7 @@
     (set 'GL_LIB "/System/Library/Frameworks/OpenGL.Framework/Libraries/libGL.dylib")
     (set 'GLUT_LIB "/System/Library/Frameworks/GLUT.Framework/GLUT")
   )
-  (find ostype '("Win32", "Cygwin"))
+  (find ostype '("Windows", "Cygwin"))
   (begin
     (set 'GL_LIB "opengl32.dll")
     (set 'GLUT_LIB "glut32.dll"))
@@ -151,7 +151,7 @@
 )
 
 (define (keyboard key x y)
-	(if (= (& key 0xFF) 27) (exit)) ; 0xFF mask necessary in Win32
+	(if (= (& key 0xFF) 27) (exit)) ; 0xFF mask necessary in Windows
 	(println "key:" (& key 0xFF) " x:" x  " y:" y))
 
 (define (mouse button state x y)

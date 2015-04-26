@@ -3,9 +3,9 @@
 ;; test newlisp DLL
 
 (println)
-(println "Testing Win32 DLL calls")
+(println "Testing Windows DLL calls")
 
-(unless (= ostype "Win32")
+(unless (find ostype '("Windows"))
 	(println "not tested on " ostype)
 	(exit)
 )
@@ -33,8 +33,8 @@
 		(println "-> " (= (dll-eval 'x) 12345))
 		(println "-> " (= (dll-eval '(foo bar)) "ERROR in DLL call")) )
 
-	(println ">>>>> Win32 DLL CALLS SUCCESSFUL")
-	(println ">>>>> PROBLEM IN Win32 DLL CALLS")
+	(println ">>>>> Windows DLL CALLS SUCCESSFUL")
+	(println ">>>>> PROBLEM IN Windows DLL CALLS")
 )
 
 (println)

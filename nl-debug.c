@@ -22,7 +22,7 @@
 #include "protos.h"
 
 #ifdef WINDOWS
-#define fgets win32_fgets
+#define fgets win_fgets
 #endif
 
 extern FILE * IOchannel;

@@ -24,8 +24,8 @@
 # and file LOCALIZATION for details
 #
 
-VERSION = 10.6.2
-INT_VERSION = 10602
+VERSION = 10.6.3
+INT_VERSION = 10603
 
 default: makefile_build
 	make -f makefile_build
@@ -82,6 +82,23 @@ winall_utf8:
 	rm *.o
 	./newlisp qa-dot
 	tar czvf newlisp-win-utf8.tgz newlisp.exe newlisp.dll
+
+winall64:
+	make clean
+	make -f makefile_mingw64_ffi
+	rm *.o
+	make -f makefile_mingw64dll_ffi
+	rm *.o
+	tar czvf newlisp-win64.tgz newlisp.exe newlisp.dll
+
+# make newlisp.exe and newlisp.dll in UTF-8 flavor
+winall64_utf8:
+	make clean
+	make -f makefile_mingw64_utf8_ffi
+	rm *.o
+	make -f makefile_mingw64dll_utf8_ffi
+	rm *.o
+	tar czvf newlisp-win64-utf8.tgz newlisp.exe newlisp.dll
 
 # make a Windows intaller package
 wings:
@@ -163,7 +180,7 @@ check:
 	./newlisp qa-specific-tests/qa-cilk
 	./newlisp qa-specific-tests/qa-ref
 	./newlisp qa-specific-tests/qa-message
-	./newlisp qa-specific-tests/qa-win32dll
+	./newlisp qa-specific-tests/qa-win-dll
 	./newlisp qa-specific-tests/qa-bigint 10000
 	./newlisp qa-specific-tests/qa-bench
 
@@ -182,7 +199,7 @@ checkall:
 	./newlisp qa-specific-tests/qa-cilk
 	./newlisp qa-specific-tests/qa-ref
 	./newlisp qa-specific-tests/qa-message
-	./newlisp qa-specific-tests/qa-win32dll
+	./newlisp qa-specific-tests/qa-win-dll
 	./newlisp qa-specific-tests/qa-blockmemory
 	./newlisp qa-specific-tests/qa-exception
 	./newlisp qa-specific-tests/qa-float
@@ -225,7 +242,7 @@ install_home:
 uninstall_home:
 	-make -f makefile_install uninstall_home
 
-# This make the main newlisp-x.x.x.tgz source distribuition package
+# This makes the main newlisp-x.x.x.tgz source distribuition package
 dist: clean
 	-mkdir newlisp-$(VERSION)
 	-mkdir newlisp-$(VERSION)/guiserver
@@ -239,7 +256,7 @@ dist: clean
 	-mkdir newlisp-$(VERSION)/newlisp-js
 	cp README newlisp-$(VERSION)
 	cp nl*.c newlisp.c *.h pcre*.c index.cgi newlisp-$(VERSION)
-	cp win3*.* unix*.c newlisp-$(VERSION)
+	cp win-*.* unix*.c newlisp-$(VERSION)
 	cp Makefile configure* makefile* qa-dot qa-comma newlisp-$(VERSION)
 	cp modules/* newlisp-$(VERSION)/modules
 	cp examples/* newlisp-$(VERSION)/examples

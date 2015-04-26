@@ -1,4 +1,4 @@
-/* win32dll.c - make the newlisp.exe usable as a DLL 
+/* win-dll.c - make the newlisp.exe usable as a DLL 
 
     Copyright (C) 2011 Lutz Mueller
 
@@ -163,7 +163,7 @@ currently only tested with newLISP as caller:
 
 */
 
-long EXPORT newlispCallback(char * funcName, long funcAddr, char * callType)
+intptr_t EXPORT newlispCallback(char * funcName, intptr_t funcAddr, char * callType)
 {
 CELL * pCell;
 SYMBOL * symbol;
