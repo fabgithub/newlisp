@@ -26,7 +26,7 @@ BSD_CC="${DEFAULT_CC}"
 SUNOS_CC="gcc"
 AIX_CC="xlc_r"
 TRU64_CC="cc"
-WIN32_CC="gcc"
+WINDOWS_CC="gcc"
 OS2_CC="${DEFAULT_CC}"
 
 DEFAULT_CFLAGS=" -Wall -Wno-uninitialized -fno-strict-aliasing -O2 -c"
@@ -37,7 +37,7 @@ SUNOS_CFLAGS=" -Wall -pedantic -Wno-uninitialized -Wno-long-long -fno-strict-ali
 AIX_XLCFLAGS=" -O2 -c"
 AIX_GCCFLAGS=" -Wall -pedantic -Wno-uninitialized -Wno-long-long -fno-strict-aliasing -O2 -c"
 TRU64_CFLAGS=" -ieee -pedantic -O3 -c -D_POSIX_PII_SOCKET"
-WIN32_CFLAGS=" -Wall -Wno-uninitialized -Wno-long-long -O1 -c"
+WINDOWS_CFLAGS=" -Wall -Wno-uninitialized -Wno-long-long -O1 -c"
 OS2_CFLAGS=" -Wall -pedantic -Wno-uninitialized -Wno-long-long -Wno-strict-aliasing -O2 -c -s"
 
 DEFAULT_LDFLAGS="-lm"
@@ -47,17 +47,17 @@ BSD_LDFLAGS="${DEFAULT_LDFLAGS}"
 SUNOS_LDFLAGS="-lm -ldl -lrt -lsocket -lnsl"
 AIX_LDFLAGS="-lm -ldl -lrt -lnsl"
 TRU64_LDFLAGS="-lm -lrt -ldb -lbsd"
-WIN32_LDFLAGS="-lws2_32"
+WINDOWS_LDFLAGS="-lws2_32"
 OS2_LDFLAGS="-Zomf -Zmt -lm -ldl"
 
 DEFAULT_OBJS="newlisp.o nl-symbol.o nl-math.o nl-list.o nl-liststr.o nl-string.o nl-filesys.o \
 	nl-sock.o nl-import.o nl-xml-json.o nl-web.o nl-matrix.o nl-debug.o pcre.o"
 
 DEFAULT_STRIP="strip"
-WIN32_STRIP="strip"
+WINDOWS_STRIP="strip"
 
 DEFAULT_TARG="newlisp"
-WIN32_TARG="newlisp.exe"
+WINDOWS_TARG="newlisp.exe"
 OS2_TARG="newlisp.exe"
 
 echo
@@ -70,8 +70,7 @@ case `uname` in
 	SunOS) true ${os_type:=SUNOS} ;;
 	AIX) true ${os_type:=AIX} ;; 
 	OSF1) true ${os_type:=TRU64} ;;
-	MINGW32_*) true ${os_type:=WIN_32} ;;
-	MINGW64_*) true ${os_type:=WIN_64} ;;
+	MINGW*) true ${os_type:=WINDOWS} ;;
 	OS/2) true ${os_type:=OS2} ;;
 	*)
 		echo Could not discover your OS platform use one of the following commands:
@@ -100,13 +99,13 @@ elif [ ${os_type} = TRU64 ] ; then
 	DEFAULT_CC="${TRU64_CC}"
 	DEFAULT_CFLAGS="${TRU64_CFLAGS}"
 	DEFAULT_LDFLAGS="${TRU64_LDFLAGS}"
-elif [ ${os_type} = WIN_32 ] ; then
-	DEFAULT_CC="${WIN32_CC}"
-	DEFAULT_CFLAGS="${WIN32_CFLAGS}"
-	DEFAULT_LDFLAGS="${WIN32_LDFLAGS}"
+elif [ ${os_type} = WINDOWS ] ; then
+	DEFAULT_CC="${WINDOWS_CC}"
+	DEFAULT_CFLAGS="${WINDOWS_CFLAGS}"
+	DEFAULT_LDFLAGS="${WINDOWS_LDFLAGS}"
 	DEFAULT_OBJS="${DEFAULT_OBJS} win-util.o win-path.o"
-	DEFAULT_STRIP="${WIN32_STRIP}"
-	DEFAULT_TARG="${WIN32_TARG}"
+	DEFAULT_STRIP="${WINDOWS_STRIP}"
+	DEFAULT_TARG="${WINDOWS_TARG}"
 	true ${enable_readline:=no};
 	true ${enable_utf8:=no};
 elif [ ${os_type} = OS2 ] ; then
