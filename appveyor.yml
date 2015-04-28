@@ -1,0 +1,32 @@
+version: 1.0.{build}
+
+os: MinGW
+
+platform:
+  - x86
+  - x64
+
+environment:
+  global:
+    CC: gcc
+    STRIP: strip
+    MSYS_ROOT: C:\MinGW\msys\1.0
+
+install:
+  - if "%platform%" == "x64" (
+      appveyor DownloadFile http://downloads.sourceforge.net/project/mingwbuilds/host-windows/releases/4.8.1/64-bit/threads-win32/seh/x64-4.8.1-release-win32-seh-rev5.7z
+      & 7z x -oC:\ x64-4.8.1-release-win32-seh-rev5.7z > nul
+      & echo Download and Extract mingw-w64 ...done
+    )
+  - if "%platform%" == "x64" set MINGW_ROOT=C:\mingw64
+  - if "%platform%" == "x86" set MINGW_ROOT=C:\MinGW
+  - set PATH=%MINGW_ROOT%\bin;%MSYS_ROOT%\bin;%PATH%
+  - '%CC% -v'
+
+build_script:
+  - sh -c "./configure-alt && make"
+
+test_script:
+  - sh -c "./newlisp -v"
+  - sh -c "./newlisp -e '(if (= ostype {Windows}) (make-dir {/temp}))'"
+  - sh -c "make testall"
