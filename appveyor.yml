@@ -24,7 +24,7 @@ install:
   - '%CC% -v'
 
 build_script:
-  - sh -c "./configure-alt && make"
+  - sh -c "make -f Makefile.w32"
 
 test_script:
   - sh -c "./newlisp -v"
