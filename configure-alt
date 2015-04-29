@@ -355,7 +355,7 @@ cat >> config.h <<EOF
 EOF
 
 
-if [ $memory_model = LP64 ] ; then
+if [ $memory_model = LP64 -o $memory_model = LLP64 ] ; then
 	cat >> config.h <<EOF
 /* This platform is using the LP64 memory model.  Adding legacy #define */
 #define NEWLISP64
