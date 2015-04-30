@@ -29,6 +29,10 @@
 #define BIGINT
 #define KMEANS 
 
+#undef NEWLISP64
+#if defined(_LP64) || defined(_WIN64)
+#define NEWLISP64
+#endif
 
 /* config.h is only needed when doing auto configuration with ./configure-alt */
 #ifdef NEWCONFIG
