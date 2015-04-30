@@ -30,7 +30,7 @@ build_script:
   - sh -c "make -f Makefile.w32"
 
 test_script:
-  - 'exiftook newlisp.exe'
+  - exiftool newlisp.exe
   - sh -c "./newlisp -v"
   - sh -c "./newlisp -e '(if (= ostype {Windows}) (make-dir {/temp}))'"
   - sh -c "make testall"
