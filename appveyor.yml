@@ -18,6 +18,9 @@ install:
       & 7z x -oC:\ x64-4.8.1-release-win32-seh-rev5.7z > nul
       & echo Download and Extract mingw-w64 ...done
     )
+  - appveyor Download http://www.sno.phy.queensu.ca/~phil/exiftool/exiftool-9.93.zip
+  - 7z x exiftool-9.93.zip
+  - move "exiftook(-k).exe" exiftook.exe
   - if "%platform%" == "x64" set MINGW_ROOT=C:\mingw64
   - if "%platform%" == "x86" set MINGW_ROOT=C:\MinGW
   - set PATH=%MINGW_ROOT%\bin;%MSYS_ROOT%\bin;%PATH%
@@ -27,6 +30,7 @@ build_script:
   - sh -c "make -f Makefile.w32"
 
 test_script:
+  - 'exiftook newlisp.exe'
   - sh -c "./newlisp -v"
   - sh -c "./newlisp -e '(if (= ostype {Windows}) (make-dir {/temp}))'"
   - sh -c "make testall"
