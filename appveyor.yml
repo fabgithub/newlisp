@@ -12,6 +12,10 @@ environment:
     STRIP: strip
     MSYS_ROOT: C:\MinGW\msys\1.0
 
+cache:
+  - x64-4.8.1-release-win32-seh-rev5.7z
+  - exiftool-9.93.zip
+
 install:
   - if "%platform%" == "x64" (
       appveyor DownloadFile http://downloads.sourceforge.net/project/mingwbuilds/host-windows/releases/4.8.1/64-bit/threads-win32/seh/x64-4.8.1-release-win32-seh-rev5.7z

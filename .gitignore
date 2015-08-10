@@ -22,6 +22,7 @@ junk
 junk2
 qa-junk.txt
 pipe-child.lsp
+udptest.lsp
 /modules/SQLITE3-TEST
 /modules/test.gz
 ._*

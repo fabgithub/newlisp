@@ -8,10 +8,14 @@
 // StringFileInfo BLOCK statement
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa381049%28v=vs.85%29.aspx
 
-#include "../version.h"
+/* Strings are enclosed in quotation marks. RC does not automatically 
+ * append a terminating null character to a string. Each string is a 
+ * sequence of the specified ANSI characters, unless you qualify it as a 
+ * wide-character string with the "L" prefix.
+ */
 
-#define WIN32_LEAN_AND_MEAN 
-#include <windows.h>
+#include "../version.h"
+#include <winver.h>
 
 #define NEWLISP_PROGNAME	"newlisp.exe"
 #define NEWLISP_DESCRIPTION	"newLISP interpreter (CUI)"
@@ -23,8 +27,6 @@
 #else
 # define VER_DEBUG	VS_FF_DEBUG
 #endif
-
-101 ICON "newLISP.ico"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION	RC_VERSION
@@ -50,6 +52,9 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x409, 1252
+        /* U.S.English, Unicode */
+        VALUE "Translation", 0x409, 1200
     END
 END
+
+2 ICON "newLISP.ico"

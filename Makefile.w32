@@ -6,17 +6,31 @@ WINDRES = windres
 
 OBJS = newlisp.o nl-symbol.o nl-math.o nl-list.o nl-liststr.o nl-string.o nl-filesys.o \
 	nl-sock.o nl-import.o nl-xml-json.o nl-web.o nl-matrix.o nl-debug.o pcre.o \
-	nl-utf8.o win-util.o win-path.o win32/icon.o
+	nl-utf8.o
 
-CFLAGS = -Wall -g
-CPPFLAGS = -DWINDOWS -DSUPPORT_UTF8
-LDLIBS = -lws2_32
+FFIVER ?= 3.0.9
+
+FFIDIR = /local/lib/libffi-$(FFIVER)
+
+vpath %.a $(FFIDIR)/lib
+
+DEFS := -DWINDOWS
+
+CFLAGS = -Wall -g -I$(FFIDIR)/include
+CPPFLAGS = -DSUPPORT_UTF8 -DFFI $(DEFS)
+LDFLAGS = -L$(FFIDIR)/lib -static
+LDLIBS = -lws2_32 -lffi
 
 default: newlisp
 
 lib: newlisp.dll
 
-newlisp: $(OBJS)
+newlisp: $(OBJS) #-lffi
+
+ifeq ($(OS),Windows_NT)
+newlisp: win-util.o win-path.o
+newlisp: windows/icon.o 
+endif
 
 newlisp.dll: CPPFLAGS += -DLIBRARY
 newlisp.dll: LDFLAGS += -static-libgcc -Wl,--enable-stdcall-fixup
@@ -24,10 +38,11 @@ newlisp.dll: $(OBJS) win-dll.o win-dll.def
 	$(CC) -shared $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.rc
-	$(WINDRES) -O coff -o $@ $<
+	$(WINDRES) $< -O coff -o $@
+
 
 $(OBJS): primes.h protos.h newlisp.h
-win32/icon.o: version.h
+windows/icon.o: version.h
 
 clean:
 	$(RM) $(OBJS) *.exe *.dll
